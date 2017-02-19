@@ -32,7 +32,11 @@ def show_data():
 
 @app.route('/bookmarklet')
 def show_bookmarklet():
-    return render_template('bookmarklet.html')
+    minified = ''
+    with open('bookmarklet.js', 'r') as infile:
+        for line in infile:
+            minified = '{}{}'.format(minified, line.replace('\n', ''))
+    return render_template('bookmarklet.html', href=minified)
 
 
 @app.route('/post', methods=['GET', 'POST'])
