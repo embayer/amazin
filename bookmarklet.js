@@ -8,19 +8,23 @@ javascript:(function(){
     }
 
     var product = {};
+    product.logDate = new Date().toISOString();
     product.url = document.URL;
     product.asin = product._id = asinFromURL(product.url);
     product.pricehistory = 'https://dyn.keepa.com/pricehistory.png?domain=de&asin=' + product.asin;
     product.title = document.querySelector('#productTitle').innerText;
     product.brand = document.querySelector('#brand').innerText;
     product.brandURL = document.querySelector('#brand').href;
-    product.reviewCount = document.querySelector('#acrCustomerReviewText').innerText;
     product.salesRank = document.querySelector('#SalesRank').innerText;
     product.price = document.querySelector('span[id^=priceblock_]').innerText;
     product.priceCategory = document.querySelector('span[id^=priceblock_]').id;
 
-    var stars = document.querySelector('#acrPopover').title;
-    if (!stars) {
+    var reviewCount = document.querySelector('#acrCustomerReviewText');
+    if (reviewCount) {
+        product.reviewCount = reviewCount.innerText; 
+    }
+    var stars = document.querySelector('#acrPopover');
+    if (stars) {
         product.stars = document.querySelector('#acrPopover').title;
     }
 
@@ -47,6 +51,8 @@ javascript:(function(){
         product.shippingURL = 'https://www.amazon.de/';
     }
 
+    product.bullets = document.querySelector('#feature-bullets').innerText;
+    /**
     var bulletContainer = document.querySelector('#feature-bullets'),
         bulletList = bulletContainer.getElementsByTagName('ul'),
         bulletItems = bulletList[0].getElementsByTagName('li');
@@ -55,6 +61,7 @@ javascript:(function(){
         console.log('product.bullet_' + i + ' = ' + '"' + bulletItems[i].innerText.trim() + '"');
         eval('product.bullet_' + i + ' = ' + '"' + bulletItems[i].innerText.trim() + '"');
     }
+    **/
 
     var getParams = Object.keys(product).map(function(k) {
         return encodeURIComponent(k) + '=' + encodeURIComponent(product[k]);
