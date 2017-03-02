@@ -1,4 +1,3 @@
-from subprocess import call
 import json
 
 from flask import Flask, request, render_template, jsonify
@@ -14,7 +13,16 @@ DATA_FILE = 'data/data.json'
 
 
 def dump(data):
-    db.save(data)
+    asin = data['asin']
+    if asin not in db:
+        # create
+        db.save(data)
+    else:
+        # update
+        doc = db[asin]
+        for key, value in data.items():
+            doc[key] = value
+        db[doc.id] = doc
     with open(DATA_FILE, 'a+') as outfile:
         json.dump(data, outfile)
         outfile.write('\n')
@@ -40,7 +48,7 @@ def show_bookmarklet():
 
 
 @app.route('/post', methods=['GET', 'POST'])
-def post_link():
+def post_product():
     data = {}
     for a in request.args:
         data[a] = request.args[a]
