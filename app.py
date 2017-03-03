@@ -7,22 +7,35 @@ import couchdb
 app = Flask(__name__)
 CDB_URL = 'http://127.0.0.1:5984/'
 couch = couchdb.Server(CDB_URL)
-db = couch['products']
+product_db = couch['products']
+keyword_db = couch['keywords']
 
 DATA_FILE = 'data/data.json'
 
 
-def dump(data):
-    asin = data['asin']
-    if asin not in db:
+def dump_keyword(data):
+    keyword = data['field-keywords']
+    if keyword not in keyword_db:
         # create
-        db.save(data)
+        keyword_db.save(data)
     else:
         # update
-        doc = db[asin]
+        doc = keyword_db[keyword]
         for key, value in data.items():
             doc[key] = value
-        db[doc.id] = doc
+        keyword_db[doc.id] = doc
+
+def dump_product(data):
+    asin = data['asin']
+    if asin not in product_db:
+        # create
+        product_db.save(data)
+    else:
+        # update
+        doc = product_db[asin]
+        for key, value in data.items():
+            doc[key] = value
+        product_db[doc.id] = doc
     with open(DATA_FILE, 'a+') as outfile:
         json.dump(data, outfile)
         outfile.write('\n')
@@ -52,7 +65,10 @@ def post_product():
     data = {}
     for a in request.args:
         data[a] = request.args[a]
-    dump(data)
+    if data['type'] == 'product':
+        dump_product(data)
+    elif data['type'] == 'keyword':
+        dump_keyword(data)
 
     return render_template('success.html')
 
