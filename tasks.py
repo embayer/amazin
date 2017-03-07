@@ -73,12 +73,20 @@ class Fetcher:
 
     def get_price(self):
         from ipdb import set_trace; set_trace()
-        scraped_price = self.dom.xpath('//*[starts-with(@id, "priceblock_")]/text()')[3]
+        try:
+            scraped_price = self.dom.xpath('//*[@id="olp_feature_div"]/div/span/span')[0].text_content()
+            price_type = self.dom.xpath('//*[starts-with(@id, "priceblock_")]')[2].attrib['id']
+        except IndexError:
+            pass
+        if not scraped_price:
+            try:
+                scraped_price = self.dom.xpath('//*[starts-with(@id, "priceblock_")]')[3].text_content()
+            except IndexError:
+                pass
         currency_slice = slice(0, 3)
         price_slice = slice(4, None)
         price = scraped_price[price_slice]
         currency = scraped_price[currency_slice]
-        price_type = self.dom.xpath('//*[starts-with(@id, "priceblock_")]')[2].attrib['id']
         return {'price': price, 'currency': currency, 'priceType': price_type}
 
     def get_seller(self):
