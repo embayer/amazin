@@ -9,8 +9,6 @@ import lxml.html
 
 
 queue = Celery('tasks', broker=settings.BROKER_URL)
-couch = couchdb.Server(settings.DB_URL)
-db = couch['queue']
 
 
 class Fetcher:
@@ -55,6 +53,30 @@ class Fetcher:
     def amazon_url_product(self, asin):
         return '{}dp/{}'.format(self.amazon_base_url, asin)
 
+    def store_html(self, html, asin, meta):
+        couch = couchdb.Server(settings.DB_URL)
+        db = couch[settings.PRODUCT_HTML_DB_NAME]
+
+        doc = {'_id': asin, 'html': html, 'meta': meta}
+        if asin not in db:
+            # create
+            db.save(doc)
+        else:
+            # update
+            db_doc = db[asin]
+            for key, value in doc.items():
+                doc[key] = value
+            db[db_doc.id] = doc
+        print('stored: http://127.0.0.1:5984/_utils/document.html?products/' + asin)
+
+    def fetch_html(self, asin):
+        product_url = self.amazon_url_product(asin)
+        html = requests.get(product_url, proxies=self.proxy, headers=self.headers)
+        self.dom = lxml.html.fromstring(html.content)
+        self.check_bot()
+        self.dump_html(html)
+        self.store_html(html.text, asin, {})
+        
     def fetch(self, asin):
         product_url = self.amazon_url_product(asin)
         html = requests.get(product_url, proxies=self.proxy, headers=self.headers)
@@ -117,3 +139,9 @@ class Product:
 @queue.task
 def get_product(asin):
     product = Product(asin)
+
+
+@queue.task
+def fetch_amazon_product_dom(asin):
+    fetcher = Fetcher()
+    fetcher.fetch_html(asin)
